@@ -1,12 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export default function Dictionary(){
     const [searchQuery, setSearchQuery] = useState('');
-    const [searchResults, setSearchResults] = useState([]);
     const [cars, setCars] = useState([]);
+    const [carObj, setCarObj] = useState({
+        year: "",
+        make: "",
+        model: "",
+        date_on_yard: '',
+        style: "",
+        drive_type: "",
+        engine: "",
+        fuel_type: "",
+        vin: searchQuery,
+        color: '',
+        transmission: ''
 
-    const handleInputChange = (event) => {
-        setSearchQuery(event.target.value);
+    });
+    
+//This section handles the VIN search functionality by fetching data
+//from the NHTSA API.
+
+    const handleInputChange = (e) => {
+        setSearchQuery(e.target.value);
     };
 
     const handleSearchClick = () => {
@@ -21,8 +37,31 @@ export default function Dictionary(){
             })
             .then(data => {
               // Update the search results state with the API response data
-              setSearchResults(data);
+              //set the cars obj with the data.
               setCars(data.Results);
+
+              //create a new carinfo array of size of data results
+              const carInfo = new Array(cars.length);
+
+              //populate new carinfo array with results from data
+              cars.forEach((element, index, array) => {
+                carInfo[index] = element.Value;
+              });
+
+              //populate the CarObj with specific results from new carinfo array
+              setCarObj({
+                year: carInfo[10],
+                make: carInfo[7],
+                model: carInfo[9],
+                date_on_yard: '',
+                style: carInfo[14],
+                drive_type: carInfo[51],
+                engine: carInfo[75],
+                fuel_type: carInfo[77],
+                vin: searchQuery,
+                color: 'NULL',
+                transmission: 'NULL'
+              })
               
             })
             
@@ -33,38 +72,13 @@ export default function Dictionary(){
         }
     };
 
-    let carInfo = new Array(cars.length);
-
-    cars.forEach((element, index, array) => {
-        carInfo[index] = element.Value;
-    })
-
-    // the code above is to fetch data from the VIN api 
-    
-
-    // the code below is to gather the data fetched from VIN api and post it to the cars api.
-
-    const carObj = {
-        year: carInfo[10],
-        make: carInfo[7],
-        model: carInfo[9],
-        date_on_yard: '2023-10-05',
-        style: carInfo[14],
-        drive_type: carInfo[51],
-        engine: carInfo[75],
-        fuel_type: carInfo[77],
-        vin: searchQuery,
-        color: 'NULL',
-        transmission: 'NULL'
-
-    }
-    
-
-
-    const [postData, setPostData] = useState({key: 'value'});
+        
+//The section below gathers the data fetched from the NHTSA api and 
+//executes a POST method to send the car obj data through the custom 
+//django RESTAPI to submit to the SQLite database.
 
     const handlePostRequest = () => {
-        fetch('http://localhost:8000/api/cars/', {
+        fetch('http://localhost:8000/api/cars/addCar', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -85,111 +99,221 @@ export default function Dictionary(){
         });
     }
 
-   
+//the code below will allow you to edit the values that come in
+//from the api show in the form and submit into the database.
+    
+    function handleYearChange(e){
+        setCarObj({
+            ...carObj,
+            year: e.target.value
+        })
+    }
 
+    function handleMakeChange(e){
+        setCarObj({
+            ...carObj,
+            make: e.target.value
+        })
+    }
 
+    function handleModelChange(e){
+        setCarObj({
+            ...carObj,
+            model: e.target.value
+        })
+    }
 
+    function handleDateChange(e){
+        setCarObj({
+            ...carObj,
+            date_on_yard: e.target.value
+        })
+    }
+
+    function handleStyleChange(e){
+        setCarObj({
+            ...carObj,
+            style: e.target.value
+        })
+    }
+
+    function handleDriveTypeChange(e){
+        setCarObj({
+            ...carObj,
+            drive_type: e.target.value
+        })
+    }
+
+    function handleEngineChange(e){
+        setCarObj({
+            ...carObj,
+            engine: e.target.value
+        })
+    }
+
+    function handleFuelChange(e){
+        setCarObj({
+            ...carObj,
+            fuel_type: e.target.value
+        })
+    }
+
+    function handleColorChange(e){
+        setCarObj({
+            ...carObj,
+            color: e.target.value
+        })
+    }
+
+    function handleTransmissionChange(e){
+        setCarObj({
+            ...carObj,
+            transmission: e.target.value
+        })
+    }
+
+//CODE BELOW HANDLES ALL STRUCTURE OF THE PAGE
     return(
-        <div>
-            <div>
-                <h1>INPUT YOUR VEHICLE'S VIN </h1>
-                <input 
-                    type = "text"
-                    value = {searchQuery}
-                    onChange = {handleInputChange}
-                    placeholder='Enter VIN'
-                />
-                <button onClick={handleSearchClick}>Search VIN</button>
+        <div className = "container mx-auto">
+            <h4 className='mt-4 mb-4'>Enter VIN or Add Manually</h4>
+            <div className="relative flex w-full rounded-[7px] mt-8">
+                <div className="relative h-10 w-full rounded-[7px] bg-slate-50 mb-4">
+                    <input 
+                        type="text"
+                        className="peer h-full w-full rounded-[7px] border border-blue-gray-200 border-t-transparent bg-transparent px-3 py-2.5 pr-20 font-sans text-sm font-normal text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-gray-900 focus:border-t-transparent focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50"
+                        value={searchQuery}
+                        onChange={handleInputChange}
+                        placeholder='Enter Vin' 
+                    />
+                </div>
+                <button onClick={handleSearchClick}
+                    className="!absolute right-0 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    type="button">
+                    Search
+                </button>
             </div>
             <div>
-                <h2>Search Query: {searchQuery}</h2>
-                <h2>Search Results:</h2>
-                    <ul>
-                    <li>{carInfo[10]}</li>
-                    <li>{carInfo[7]}</li>
-                    <li>{carInfo[9]}</li>
-                    <li>{carInfo[14]}</li>
-                    <li>{carInfo[51]}</li>
-                    <li>{carInfo[75]}</li>
-                    <li>{carInfo[77]}</li>
-                    
-                    </ul>
+                
             </div>
-            <div>
-            <h1>Post Data to API</h1>
-                <button onClick={handlePostRequest}>Post Data</button>
-            </div>
+            <h4>Results:</h4>
+                <div className="mt-1">
+                    <label className="block text-lg mb-2">
+                    Year:
+                    </label>
+                    <input
+                        type="text"
+                        value={carObj.year}
+                        onChange={handleYearChange}
+                        className="w-full p-2 text-lg border border-gray-300 rounded mb-4"
+                     />
+
+                    <label htmlFor="make" className="block text-lg mb-2">
+                    Make:
+                    </label>
+                    <input
+                        type="text"
+                        value={carObj.make}
+                        onChange={handleMakeChange}
+                        className="w-full p-2 text-lg border border-gray-300 rounded mb-4"
+                     />
+
+                    <label className="block text-lg mb-2">
+                    Model:
+                    </label>
+                    <input
+                        type="text"
+                        value={carObj.model}
+                        onChange={handleModelChange}
+                        className="w-full p-2 text-lg border border-gray-300 rounded mb-4"
+                     />
+
+                    <label className="block text-lg mb-2">
+                    Date Arrived (YYYY-MM-DD):
+                    </label>
+                    <input
+                        type="text"
+                        value={carObj.date_on_yard}
+                        onChange={handleDateChange}
+                        className="w-full p-2 text-lg border border-gray-300 rounded mb-4"
+                     />
+
+                    <label className="block text-lg mb-2">
+                    Style:
+                    </label>
+                    <input
+                        type="text"
+                        value={carObj.style}
+                        onChange={handleStyleChange}
+                        className="w-full p-2 text-lg border border-gray-300 rounded mb-4"
+                     />
+
+                    <label className="block text-lg mb-2">
+                    Drive Type:
+                    </label>
+                    <input
+                        type="text"
+                        value={carObj.drive_type}
+                        onChange={handleDriveTypeChange}
+                        className="w-full p-2 text-lg border border-gray-300 rounded mb-4"
+                     />
+                    <label className="block text-lg mb-2">
+                    Engine:
+                    </label>
+                    <input
+                        type="text"
+                        value={carObj.engine}
+                        onChange={handleEngineChange}
+                        className="w-full p-2 text-lg border border-gray-300 rounded mb-4"
+                     />
+
+                    <label className="block text-lg mb-2">
+                    Fuel:
+                    </label>
+                    <input
+                        type="text"
+                        value={carObj.fuel_type}
+                        onChange={handleFuelChange}
+                        className="w-full p-2 text-lg border border-gray-300 rounded mb-4"
+                     />
+
+                    <label className="block text-lg mb-2">
+                        VIN:
+                    </label>
+                    <input
+                    type="text"
+                    value= {carObj.vin}
+                    readOnly
+                    className="w-full p-2 text-lg border border-gray-300 rounded mb-4"
+                    />
+
+                    <label className="block text-lg mb-2">
+                    Color:
+                    </label>
+                    <input
+                        type="text"
+                        value={carObj.fuel_type}
+                        onChange={handleColorChange}
+                        className="w-full p-2 text-lg border border-gray-300 rounded mb-4"
+                     />
+                    <label className="block text-lg mb-2">
+                    Transmission:
+                    </label>
+                    <input
+                        type="text"
+                        value={carObj.transmission}
+                        onChange={handleTransmissionChange}
+                        className="w-full p-2 text-lg border border-gray-300 rounded mb-4"
+                     />
+                </div>
+                <div>
+                <button
+                        onClick={handlePostRequest} 
+                        className= 'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4 mb-20'
+                        type="button">
+                        Post Data
+                    </button>
+                </div>
         </div>
     );
 }
-
-
-   //carInfo[7] MAKE
-   //carInfo[9] MODEL
-   //carinfo[10] YEAR
-   //carInfo[14] STYLE
-   //carInfo[13] TRIM
-   //carInfo[51] DRIVE TYPE
-   //carInfo[75] ENGINE
-   //carInfo[77] FUEL TYPE
-   //
-  
-    /*
-
-    1FTFW1RG5JFD84810
-
     
-    const carObj = {
-        year: carInfo[10],
-        make: carInfo[7],
-        model: carInfo[9],
-        date_on_yard: 'NULL',
-        style: carInfo[14],
-        drive_type: carInfo[51],
-        engine: carInfo[75],
-        fuel_type: carInfo[77],
-        vin: searchQuery,
-        color: 'NULL',
-        transmission: 'NULL'
-
-    }
-    
-    useEffect(() =>{
-    console.log("Fetching...");
-    fetch('https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVIN/JTEBU14R730009127?format=json')
-    .then(response=> response.json())
-    .then(data => {
-        setCars(data.Results);
-    });
-    },[]);
-
-    //console.log(cars[8]);
-    //console.log()
-
-   
-
-   const carRender = cars.map((car) => 
-        <p1>{car.Value}</p1>
-   )
-
-   //console.log(cars.length);
-
-    const carInfos = cars.forEach((element, index, array) =>{
-        //console.log(index + " " + element.Variable + " " + element.Value);
-        
-   })
-
-
-   
-
-   //cars.forEach((element, index, array) => {
-        //carInfo[index] = element.Value;
-  // })
-
-  <ul>
-                    {cars.map((car, index) => (
-                        <li key={index}>{car.Value}</li> 
-                    ))}
-                    </ul>
-
-  */
